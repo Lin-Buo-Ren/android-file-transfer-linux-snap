@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-# Snapcraft Recipe for [Project]
+# Snapcraft Recipe for Android File Transfer for Linux
 # ------------------------------
 # This file is in the YAML data serialization format:
 # http://yaml.org
@@ -16,49 +16,36 @@
 # For support refer to the snapcraft section in the Snapcraft Forum:
 # https://forum.snapcraft.io/c/snapcraft
 
-# All following comments, including this one, are designed to be stripped
-# before contributing the recipe to the upstream
-
-# my-awesome-app, my-app-name, my-app-command, my-app-launch, my-app-part
-# are placeholders text meant to be replaced by appropriate content
-
-name: my-awesome-app
-summary: Single-line elevator pitch for your amazing snap under 79 chars.
+name: android-file-transfer
+summary: Reliable MTP client with minimalistic UI.  It just works™.
 description: |
-  This is my-awesome-app's description. You have a paragraph or two to tell
-  the most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  ## Do I need it?
 
-# The path of icon to represent the snap, relative to the source tree directory
-# Only PNG or SVG image is supported, dimension must be greater than 256x256px
-icon: snap/gui/my-awesome-app.png
+  If you're happy with `gmtp`/`gvfs`/`mtpfs` or any other mtp software, you might not need this software (but give it a try!).
 
-# Version string just for humans, typically '1.2+git' or '1.3.2'
-# The wrapping single quotes are often required to avoid the version string
-# being accidentally interpreted as a YAML non-string(like '1', '1.2').
-# http://yaml.org/type
-# https://arp242.net/weblog/yaml_probably_not_so_great_after_all.html#surprising-behaviour
-version: determined-by-version-script
+  If you're suffering from crashes, missing tags, album covers, usb freezes and corrupted files, this software is right for you.
 
-# (OPTIONAL) The version string can also be dynamically determined via scripting
-# , in this case the value of the `version` key will be ignored (but the key is
-# still required).
-# NOTE: The resulting version string cannot be longer than 32 characters
-version-script: ./snap/local/utilities/set-snap-version.bash
-#version-script: git -C parts/my-app-part/src describe --always --dirty --tags
+  ## Features
 
-# Security confinement
-# Use `devmode` to getting started
-# Flip to `strict` once you have the right plugs and slots,
-# or `classic` once you determine that strict confinement is not currently possible
-confinement: strict
+  * Simple Qt UI with progress dialogs.
+  * FUSE wrapper (If you'd prefer mounting your device), supporting partial read/writes, allowing instant access to your files.
+  * No file size limits.
+  * Automatically renames album cover to make it visible from media player.
+  * USB 'Zerocopy' support found in recent Linux kernel (no user/kernel data copying)
+  * No extra dependencies (e.g. `libptp`/`libmtp`).
+  * Available as static/shared library.
+  * Command line tool (aft-mtp-cli)
 
-# Snap Grade
-# Use `devel` to getting started
-# Flip to `stable` once you determine that the snap is matured, only `stable` grade
-# snaps can be promoted to `candidate` and `stable` channels
-grade: stable
+  THIS IS NOT AN OFFICIAL DISTRIBUTION, refer the issue tracker for any problems regarding with this snap:
+  https://github.com/Lin-Buo-Ren/android-file-transfer-linux-snap/issues
+
+icon: snap/gui/android-file-transfer.svg
+
+#version: determined-by-adopt-info
+adopt-info: android-file-transfer
+
+confinement: classic
+grade: devel
 
 # Refer the following documentation for asserting interface plugs and slots in a security confined snap:
 # Interface management - doc - snapcraft.io
@@ -75,27 +62,32 @@ plugs:
   wayland:
 
   # Storage access
-  #home:
-  #removable-media: # Non-A/C
+  home:
+  removable-media: # Non-A/C
 
-  # Network access
-  #network:
+  raw-usb:
+  system-observe:
 
 #slots:
 
-# Apps that are exposed by the snap package
-# If the _app_name_ is identical with the _snap_name_ it can be directly run
-# with `_snap_name_` or `snap run _snap_name_` commands, otherwise it can only be run
-# via `_snap_name_._app_name_` or `snap run _snap_name_._app_name_`
 apps:
-  my-app-name:
-    # The command to run the application, the base command should be an *relative path* to an executable file rooted from the `prime` directory (for `classic` confinement compatiblity, where command search PATHs under $SNAP isn't set for library compatiblity reasons).  The arguments are usually other launchers' *absolute path* rooted from the $SNAP environment variable that are *stacked over* previous ones to consolidate their runtime environment modifications.
-    # NOTE: The right angle bracket at the beginning of the value of the `command` keyword starts a YAML folded style block scalar, refer the following spec document for more info: http://yaml.org/spec/1.2/spec.html#id2796251
+  android-file-transfer:
     command: >
-      bin/my-awesome-app-launch
-    # If the providing part of the app. has a desktop entry, specify its path relative to the `prime` directory.
-    # If the packaging target doesn't provide a desktop entry, ignore the `desktop` key and implement a desktop entry in `/snap/gui`
-    #desktop: share/applications/my-app-name.desktop
+      bin/classic-launch
+      "${SNAP}"/bin/desktop-launch
+      "${SNAP}"/bin/android-file-transfer-launch
+      "${SNAP}"/bin/android-file-transfer
+    desktop: share/applications/android-file-transfer.desktop
+  aft-mtp-cli:
+    command: >
+      bin/classic-launch
+      "${SNAP}"/bin/android-file-transfer-launch
+      "${SNAP}"/bin/aft-mtp-cli
+  aft-mtp-mount:
+    command: >
+      bin/classic-launch
+      "${SNAP}"/bin/android-file-transfer-launch
+      "${SNAP}"/bin/aft-mtp-mount
 
 # Run `snapcraft help sources` for supported keywords on pulling a part's source ingredients
 # Run `snapcraft plugins` for supported build helper plugins
@@ -116,24 +108,70 @@ parts:
 
   # Remote part for support of various desktop technologies
   # Refer: https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml
-  desktop-gtk3: # for yad
+  desktop-qt4:
 
-  # Optional auxiliary part for displaying simple dialogs for better user experience, powered by the Yet Another Dialog
-  yad:
-    plugin: nil
-    stage-packages:
-    - yad
-
-  my-app-part:
+  android-file-transfer:
     after:
     - assets # for /snap/local/utilities/patch-desktop-entries
 
-    #source:
-    #source-type:
-    #source-tag:
-    #source-depth:
+    source: https://github.com/whoozle/android-file-transfer-linux.git
+    source-depth: 1
 
-    plugin: nil
+    plugin: cmake
+    configflags:
+    - -DCMAKE_BUILD_TYPE=Release
+    build-packages:
+    - build-essential
+    - libfuse-dev
+    - libmagic-dev
+    - libqt4-dev
+    - libreadline-dev
+
+    stage-packages:
+    - libmagic1
+
+    override-pull: |
+      set \
+        -o errexit \
+        -o nounset
+
+      snapcraftctl pull
+
+      upstream_revision="$(
+        git describe \
+          --always \
+          --dirty=-d \
+          --match='v*' \
+          --tags
+      )"
+
+      packaging_revision="$(
+        git -C .. describe \
+          --abbrev=4 \
+          --always \
+          --dirty=-d \
+          --match=nothing
+      )"
+
+      snapcraftctl set-version \
+        "${upstream_revision}"-snap-"${packaging_revision}"
+
+    filesets:
+      executables:
+      - bin
+      library-static:
+      - lib/*.a
+      resource-desktop-entries:
+      - share/applications
+      resource-icons:
+      - share/icons
+      resource-appdata:
+      - share/metainfo
+
+    stage:
+    - $executables
+    - $resource-desktop-entries
+    - $resource-icons
 
     override-stage: |
       set \
@@ -143,3 +181,8 @@ parts:
       snapcraftctl stage
 
       utilities/patch-desktop-entries.bash
+
+    prime:
+    - $executables
+    - $resource-desktop-entries
+    - $resource-icons
